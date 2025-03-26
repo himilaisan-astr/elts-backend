@@ -1,10 +1,8 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import Annotated
 import uvicorn
-from app.database import SessionLocal, engine, Base, get_db
+from app.database import engine, Base, get_db
 from app.models import User
 from app.routes import auth, api
 
@@ -21,6 +19,8 @@ app = FastAPI(
 origins = [
     "http://localhost:3000",  # React frontend
     "http://127.0.0.1:3000",
+    "http://localhost:8000",  # Backend for development
+    "http://127.0.0.1:8000",
 ]
 
 app.add_middleware(
@@ -29,11 +29,20 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
-app.include_router(auth.router, tags=["authentication"])
-app.include_router(api.router, prefix="/api", tags=["api"])
+app.include_router(
+    auth.router,
+    prefix="/api",
+    tags=["authentication"]
+)
+app.include_router(
+    api.router,
+    prefix="/api",
+    tags=["api"]
+)
 
 @app.get("/api/health")
 def health_check():
