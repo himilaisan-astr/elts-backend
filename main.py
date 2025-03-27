@@ -36,28 +36,19 @@ app.add_middleware(
 app.include_router(
     auth.router,
     prefix="/api",
-    tags=["authentication"]
+    tags=["Authentication"]
 )
+
 app.include_router(
     api.router,
     prefix="/api",
-    tags=["api"]
 )
 
-@app.get("/api/health")
+@app.get("/api/health", tags=["Dashboard"])
 def health_check():
     return {"status": "healthy", "service": "ELTS Backend"}
 
-@app.get("/api")
-def read_root():
-    return {"message": "Welcome to ELTS Backend"}
-
-@app.get("/api/users/", response_model=list[dict])
-def read_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return [{"id": user.id, "username": user.username, "role": user.role} for user in users]
-
-@app.get("/")
+@app.get("/", tags=["Dashboard"])
 async def root():
     return {
         "message": "Welcome to ELTS School API",
