@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 import uvicorn
 from app.database import engine, Base, get_db
 from app.models import User
-from app.routes import auth, api
+from app.routes import auth, courses, students, teachers, enrollments, dashboard
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -40,7 +40,28 @@ app.include_router(
 )
 
 app.include_router(
-    api.router,
+    dashboard.router,
+    prefix="/api",
+)
+
+app.include_router(
+    students.router,
+    prefix="/api",
+)
+
+app.include_router(
+    teachers.router,
+    prefix="/api",
+)
+
+app.include_router(
+    courses.router,
+    prefix="/api",
+)
+
+
+app.include_router(
+    enrollments.router,
     prefix="/api",
 )
 
