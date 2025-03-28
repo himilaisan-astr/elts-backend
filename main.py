@@ -1,29 +1,81 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from typing import Annotated
 import uvicorn
-from app.database import SessionLocal, engine
-from app.models import Base, User
+from app.database import engine, Base, get_db
+from app.models import User
+from app.routes import auth, courses, students, teachers, enrollments, dashboard
 
-app = FastAPI(title="ELTS Backend")
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
-# Dependency
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+app = FastAPI(
+    title="ELTS School API",
+    description="API for ELT School of English Admin Dashboard",
+    version="1.0.0"
+)
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to ELTS Backend"}
+# Configure CORS
+origins = [
+    "http://localhost:3000",  # React frontend
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",  # Backend for development
+    "http://127.0.0.1:8000",
+]
 
-@app.get("/users/", response_model=list[dict])
-def read_users(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    return [{"id": user.id, "username": user.username, "role": user.role} for user in users]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
+# Include routers
+app.include_router(
+    auth.router,
+    prefix="/api",
+    tags=["Authentication"]
+)
+
+app.include_router(
+    dashboard.router,
+    prefix="/api",
+)
+
+app.include_router(
+    students.router,
+    prefix="/api",
+)
+
+app.include_router(
+    teachers.router,
+    prefix="/api",
+)
+
+app.include_router(
+    courses.router,
+    prefix="/api",
+)
+
+
+app.include_router(
+    enrollments.router,
+    prefix="/api",
+)
+
+@app.get("/api/health", tags=["Dashboard"])
+def health_check():
+    return {"status": "healthy", "service": "ELTS Backend"}
+
+@app.get("/", tags=["Dashboard"])
+async def root():
+    return {
+        "message": "Welcome to ELTS School API",
+        "docs": "/docs",
+        "redoc": "/redoc"
+    }
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
